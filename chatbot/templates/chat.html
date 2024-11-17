@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+
+{% block title %}Chatbot Interface{% endblock %}
+
+{% block content %}
+<h1 style="text-align: center; font-family: Arial, sans-serif; color: #007bff; margin-top: 20px;">
+    Mental health counseling Chatbot</h1>
+
+<div id="chatArea"
+     style="border: 1px solid #ccc; border-radius: 15px; padding: 20px; height: 400px; overflow-y: auto; background: linear-gradient(145deg, #f7f7f7, #ffffff); box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); margin-bottom: 20px;">
+</div>
+
+<form id="chatForm" style="display: flex; justify-content: center; gap: 10px;">
+    <input type="text" id="userInput"
+           placeholder="Type your message here..."
+           aria-label="Type your message here"
+           style="flex: 1; padding: 12px 15px; border-radius: 25px; border: 1px solid #ccc; font-size: 16px; outline: none; transition: all 0.3s ease;">
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+    <button type="submit"
+            style="padding: 12px 25px; border: none; border-radius: 25px; background: linear-gradient(145deg, #007bff, #0056d3); color: white; font-size: 16px; cursor: pointer; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); transition: all 0.3s ease;">
+        Send
+    </button>
+</form>
+
+<script>
+    $(document).ready(function(){
+        function scrollToBottom() {
+            $('#chatArea').scrollTop($('#chatArea')[0].scrollHeight);
+        }
+
+        function appendMessage(sender, message, isUser) {
+            const chatBubble = $('<div>').addClass('chat-bubble').text(message);
+            const chatWrapper = $('<div>').addClass('chat-message').append(chatBubble);
+
+            if (isUser) {
+                chatWrapper.css({'text-align': 'right'});
+                chatBubble.css({
+                    'background': 'linear-gradient(145deg, #007bff, #0056d3)',
+                    'color': 'white',
+                    'border-radius': '20px 20px 0 20px',
+                    'box-shadow': '0px 4px 6px rgba(0, 0, 0, 0.1)'
+                });
+            } else {
+                chatBubble.css({
+                    'background': 'linear-gradient(145deg, #f1f1f1, #e6e6e6)',
+                    'color': '#333',
+                    'border-radius': '20px 20px 20px 0',
+                    'box-shadow': '0px 4px 6px rgba(0, 0, 0, 0.1)'
+                });
+            }
+
+            $('#chatArea').append(chatWrapper);
+            scrollToBottom();
+        }
+
+        $('#chatForm').on('submit', function(event){
+            event.preventDefault();
+
+            var userInput = $('#userInput').val().trim();
+
+            if (!userInput) {
+                alert('Please enter a message.');
+                return;
+            }
+
+            appendMessage('You', userInput, true);
+
+            $('#userInput').prop('disabled', true);
+            $('button[type="submit"]').prop('disabled', true);
+
+            $.ajax({
+                url: '',
+                type: 'POST',
+                data: {
+                    'user_input': userInput,
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(response){
+                    appendMessage('Bot', response.reply, false);
+                    $('#userInput').val('');
+                    $('#userInput').focus();
+                },
+                error: function(){
+                    alert('Something went wrong. Please try again.');
+                },
+                complete: function() {
+                    $('#userInput').prop('disabled', false);
+                    $('button[type="submit"]').prop('disabled', false);
+                }
+            });
+        });
+    });
+</script>
+
+<style>
+    body {
+        font-family: 'Arial', sans-serif;
+        background-color: #f8f9fa;
+        margin: 0;
+        padding: 0;
+    }
+
+    .chat-message {
+        margin: 10px 0;
+        display: flex;
+    }
+
+    .chat-bubble {
+        display: inline-block;
+        padding: 12px 18px;
+        max-width: 70%;
+        word-wrap: break-word;
+        font-size: 16px;
+        line-height: 1.4;
+    }
+
+    input#userInput:focus {
+        border-color: #007bff;
+        box-shadow: 0px 0px 8px rgba(0, 123, 255, 0.5);
+    }
+
+    button:hover {
+        background: linear-gradient(145deg, #0056d3, #0044b0);
+        transform: scale(1.05);
+    }
+</style>
+{% endblock %}
